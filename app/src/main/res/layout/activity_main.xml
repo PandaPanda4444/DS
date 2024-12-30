@@ -18,15 +18,15 @@
         android:id="@+id/evaluateButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="محاسبه کن"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:text="محاسبه کن" />
 
     <TextView
         android:id="@+id/resultTextView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="74dp"
+        android:layout_marginTop="16dp"
         android:text="نتیجه: "
-        android:textSize="18sp"
-        android:layout_marginTop="16dp"/>
+        android:textSize="18sp" />
 
 </LinearLayout>
