@@ -1,6 +1,5 @@
 package com.example.myapplication;
 
-
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,17 +23,33 @@ public class MainActivity extends AppCompatActivity {
             String expression = inputExpression.getText().toString();
 
             try {
-                // قالب‌بندی عبارت به صورت Infix با پرانتز کامل
-                String formattedExpression = ExpressionFormatter.formatToInfixWithParentheses(expression);
-                resultTextView.setText("عبارت قالب‌بندی شده: " + formattedExpression);
-
-                // محاسبه عبارت
+                // Calculate the expression
                 double result = ExpressionEvaluator.evaluate(expression);
-                resultTextView.append("\nنتیجه: " + result);
+                resultTextView.setText("Result: " + result);
             } catch (IllegalArgumentException e) {
-                Toast.makeText(this, "عبارت نامعتبر است!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Invalid expression!", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    public static void main(String[] args) {
+        // Test different expressions
+        String[] testExpressions = {
+            "2 + 3",
+            "4 * 5 - 6",
+            "(7 + 8) * 2",
+            "-5 + 3",
+            "10 / 2",
+            "2.5 * 3"
+        };
+
+        for (String expr : testExpressions) {
+            try {
+                double result = ExpressionEvaluator.evaluate(expr);
+                System.out.println("Expression: " + expr + " = " + result);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error evaluating '" + expr + "': " + e.getMessage());
+            }
+        }
+    }
 }
