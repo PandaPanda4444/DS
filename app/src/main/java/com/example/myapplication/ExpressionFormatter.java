@@ -1,11 +1,10 @@
 package com.example.myapplication;
 
-
 import java.util.Stack;
 
 public class ExpressionFormatter {
 
-    // متد برای قالب‌بندی عبارت به صورت Infix با پرانتز کامل
+    // Method to format expression to Infix with complete parentheses
     public static String formatToInfixWithParentheses(String expression) {
         Stack<String> stack = new Stack<>();
         StringBuilder result = new StringBuilder();
@@ -19,16 +18,16 @@ public class ExpressionFormatter {
                     number.append(expression.charAt(i++));
                 }
                 i--; // Adjust index after the loop
-                stack.push(number.toString());
+                result.append(number.toString());
             } else if (c == '(') {
                 stack.push(String.valueOf(c));
             } else if (c == ')') {
-                StringBuilder subExpression = new StringBuilder();
-                while (!stack.peek().equals("(")) {
-                    subExpression.insert(0, stack.pop());
+                while (!stack.isEmpty() && !stack.peek().equals("(")) {
+                    result.append(stack.pop());
                 }
-                stack.pop(); // Remove '('
-                stack.push("(" + subExpression.toString() + ")");
+                if (!stack.isEmpty()) {
+                    stack.pop(); // Remove '('
+                }
             } else if (isOperator(c)) {
                 while (!stack.isEmpty() && precedence(c) <= precedence(stack.peek().charAt(0))) {
                     result.append(stack.pop());
@@ -44,12 +43,12 @@ public class ExpressionFormatter {
         return result.toString();
     }
 
-    // متد بررسی اینکه آیا این کاراکتر یک عملگر است
+    // Method to check if a character is an operator
     private static boolean isOperator(char c) {
         return c == '+' || c == '-' || c == '*' || c == '/';
     }
 
-    // متد برای گرفتن اولویت عملگر
+    // Method to get operator precedence
     private static int precedence(char operator) {
         if (operator == '+' || operator == '-') {
             return 1;

@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+    
+    <!-- Additional colors if needed -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,4 +12,20 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Button Colors -->
+    <color name="button_normal">#FFFFFF</color>
+    <color name="button_pressed">#EEEEEE</color>
+    <color name="operator_normal">#E1F5FE</color>
+    <color name="operator_pressed">#B3E5FC</color>
+    <color name="special_normal">#FFE0B2</color>
+    <color name="special_pressed">#FFCC80</color>
+    <color name="equals_normal">#2196F3</color>
+    <color name="equals_pressed">#1976D2</color>
+    
+    <!-- Text Colors -->
+    <color name="button_text">#212121</color>
+    <color name="operator_text">#0288D1</color>
+    <color name="special_text">#F57C00</color>
+    <color name="equals_text">#FFFFFF</color>
 </resources>
