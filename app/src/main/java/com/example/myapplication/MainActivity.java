@@ -1,5 +1,6 @@
 package com.example.myapplication; // Package declaration
 
+import android.annotation.SuppressLint;
 import android.graphics.Color; // Import for color manipulation
 import android.os.Bundle; // Import for activity lifecycle management
 import android.util.Log; // Import for logging
@@ -16,23 +17,27 @@ import java.util.Stack; // Import for stack data structure
 import java.util.regex.Matcher; // Import for regex matching
 import java.util.regex.Pattern; // Import for regex pattern
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener { // Main activity class
+// Main activity class for the calculator app
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private EditText inputExpression; // EditText for user input
-    private TextView resultTextView; // TextView for displaying results
+    // Initialize UI components
+    private EditText inputExpression;
+    private TextView resultTextView;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) { // onCreate method
-        super.onCreate(savedInstanceState); // Call to superclass method
-        setContentView(R.layout.activity_main); // Set the layout for the activity
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        inputExpression = findViewById(R.id.inputExpression); // Initialize input field
-        resultTextView = findViewById(R.id.resultTextView); // Initialize result display
-        setupCalculatorButtons(); // Setup button listeners
+        // Setup input and result display
+        inputExpression = findViewById(R.id.inputExpression);
+        resultTextView = findViewById(R.id.resultTextView);
+        setupCalculatorButtons();
     }
 
-    private void setupCalculatorButtons() { // Method to setup button listeners
-        int[] buttonIds = new int[]{ // Array of button IDs
+    // Setup button listeners for calculator
+    private void setupCalculatorButtons() {
+        int[] buttonIds = new int[]{
             R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
             R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9,
             R.id.btnDot, R.id.btnPlus, R.id.btnMinus, R.id.btnMultiply,
@@ -40,153 +45,158 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             R.id.btnClear, R.id.btnDelete, R.id.btnEquals, R.id.btnSpace
         };
         
-        for (int id : buttonIds) { // Loop through button IDs
-            setButtonClickListener(id); // Set click listener for each button
+        for (int id : buttonIds) {
+            setButtonClickListener(id);
         }
     }
 
-    private void setButtonClickListener(int buttonId) { // Method to set click listener
-        findViewById(buttonId).setOnClickListener(this); // Set this class as listener
+    // Set click listener for a button
+    private void setButtonClickListener(int buttonId) {
+        findViewById(buttonId).setOnClickListener(this);
     }
 
     @Override
-    public void onClick(View view) { // Handle button clicks
-        if (view instanceof Button) { // Check if view is a button
-            Button button = (Button) view; // Cast view to button
-            String buttonText = button.getText().toString(); // Get button text
+    public void onClick(View view) {
+        if (view instanceof Button) {
+            Button button = (Button) view;
+            String buttonText = button.getText().toString();
 
-            switch (view.getId()) { // Switch based on button ID
-                case R.id.btnEquals: // Equals button
-                    calculateResult(); // Calculate result
+            switch (view.getId()) {
+                case R.id.btnEquals:
+                    calculateResult();
                     break;
-                case R.id.btnClear: // Clear button
-                    inputExpression.setText(""); // Clear input
-                    resultTextView.setText(""); // Clear result
+                case R.id.btnClear:
+                    inputExpression.setText("");
+                    resultTextView.setText("");
                     break;
-                case R.id.btnDelete: // Delete button
-                    String currentText = inputExpression.getText().toString(); // Get current text
-                    if (!currentText.isEmpty()) { // Check if text is not empty
-                        inputExpression.setText(currentText.substring(0, currentText.length() - 1)); // Remove last character
+                case R.id.btnDelete:
+                    String currentText = inputExpression.getText().toString();
+                    if (!currentText.isEmpty()) {
+                        inputExpression.setText(currentText.substring(0, currentText.length() - 1));
                     }
                     break;
-                default: // Default case for other buttons
-                    handleSpecialCharacters(buttonText); // Handle special characters
-            }
-        }
-    }
-
-    private void handleSpecialCharacters(String buttonText) { // Handle special characters
-        String processedText = buttonText
-            .replace("×", "*") // Replace multiplication symbol
-            .replace("÷", "/") // Replace division symbol
-            .replace("^2", "^") // Replace power symbol
-            .replace("Space", " "); // Replace space text
-        inputExpression.append(processedText); // Append processed text to input
-    }
-
-    private void calculateResult() { // Calculate the result of the expression
-        try {
-            String expression = inputExpression.getText().toString().trim(); // Get and trim input
-            if (expression.isEmpty()) { // Check if input is empty
-                showError("Please enter an expression"); // Show error message
-                return; // Exit method
-            }
-
-            NotationType notation = detectNotationType(expression); // Detect notation type
-            
-            // Pre-process expression to handle negative numbers correctly
-            if (notation == NotationType.INFIX) { // Check if notation is infix
-                expression = expression.replace("(-", "(0-"); // Replace negative sign
-                if (expression.startsWith("-")) { // Check if expression starts with negative
-                    expression = "0" + expression; // Prepend zero
-                }
-            }
-            
-            // Insert spaces between tokens for infix notation
-            expression = insertSpaces(expression); // Insert spaces
-            
-            // Log the expression before evaluation
-            Log.d("CalculateResult", "Expression with spaces: " + expression); // Log expression
-            
-            double result = ExpressionEvaluator.evaluate(expression, notation); // Evaluate expression
-            String formattedExpression = addParentheses(expression, notation); // Format expression
-            
-            displayResult(notation, formattedExpression, result); // Display result
-        } catch (Exception e) { // Catch exceptions
-            showError("Invalid expression: " + e.getMessage()); // Show error message
-        }
-    }
-
-    private String insertSpaces(String expression) { // Insert spaces in expression
-        return expression.replaceAll("(?<=[-+*/^()])|(?=[-+*/^()])", " "); // Regex to add spaces
-    }
-
-    private String addParentheses(String expression, NotationType notation) { // Add parentheses to expression
-        try {
-            List<String> tokens = tokenizeExpression(expression); // Tokenize expression
-            if (tokens.isEmpty()) return expression; // Return if no tokens
-
-            switch (notation) { // Switch based on notation type
-                case INFIX:
-                    return processInfixExpression(tokens); // Process infix
-                case POSTFIX:
-                    return postfixToParenthesizedInfix(tokens); // Process postfix
-                case PREFIX:
-                    return prefixToParenthesizedInfix(tokens); // Process prefix
                 default:
-                    return expression; // Default return
+                    handleSpecialCharacters(buttonText);
             }
-        } catch (Exception e) { // Catch exceptions
-            return expression; // Return original expression
         }
     }
 
-    private String processInfixExpression(List<String> tokens) { // Process infix expression
-        List<String> postfix = infixToPostfix(tokens); // Convert to postfix
-        return postfixToParenthesizedInfix(postfix); // Convert to parenthesized infix
+    // Handle special characters in button text
+    private void handleSpecialCharacters(String buttonText) {
+        String processedText = buttonText
+            .replace("×", "*")
+            .replace("÷", "/")
+            .replace("^2", "^")
+            .replace("Space", " ");
+        inputExpression.append(processedText);
     }
 
-    private String postfixToParenthesizedInfix(List<String> postfix) { // Convert postfix to parenthesized infix
-        Stack<String> stack = new Stack<>(); // Stack for processing
-        
-        for (String token : postfix) { // Iterate over tokens
-            if (isOperator(token)) { // Check if token is operator
-                if (stack.size() < 2) { // Check stack size
-                    throw new IllegalArgumentException("Invalid expression"); // Throw exception
+    // Calculate the result of the expression
+    private void calculateResult() {
+        try {
+            String expression = inputExpression.getText().toString().trim();
+            if (expression.isEmpty()) {
+                showError("Please enter an expression");
+                return;
+            }
+
+            NotationType notation = detectNotationType(expression);
+            
+            // Pre-process expression for infix notation
+            if (notation == NotationType.INFIX) {
+                expression = expression.replace("(-", "(0-");
+                if (expression.startsWith("-")) {
+                    expression = "0" + expression;
                 }
-                String right = stack.pop(); // Pop right operand
-                String left = stack.pop(); // Pop left operand
-                stack.push("(" + left + " " + token + " " + right + ")"); // Push combined expression
+            }
+            
+            expression = insertSpaces(expression);
+            Log.d("CalculateResult", "Expression with spaces: " + expression);
+            
+            double result = ExpressionEvaluator.evaluate(expression, notation);
+            String formattedExpression = addParentheses(expression, notation);
+            
+            displayResult(notation, formattedExpression, result);
+        } catch (Exception e) {
+            showError("Invalid expression: " + e.getMessage());
+        }
+    }
+
+    // Insert spaces around operators and parentheses
+    private String insertSpaces(String expression) {
+        return expression.replaceAll("(?<=[-+*/^()])|(?=[-+*/^()])", " ");
+    }
+
+    // Add parentheses to the expression based on notation
+    private String addParentheses(String expression, NotationType notation) {
+        try {
+            List<String> tokens = tokenizeExpression(expression);
+            if (tokens.isEmpty()) return expression;
+
+            switch (notation) {
+                case INFIX:
+                    return processInfixExpression(tokens);
+                case POSTFIX:
+                    return postfixToParenthesizedInfix(tokens);
+                case PREFIX:
+                    return prefixToParenthesizedInfix(tokens);
+                default:
+                    return expression;
+            }
+        } catch (Exception e) {
+            return expression;
+        }
+    }
+
+    // Process infix expression to add parentheses
+    private String processInfixExpression(List<String> tokens) {
+        List<String> postfix = infixToPostfix(tokens);
+        return postfixToParenthesizedInfix(postfix);
+    }
+
+    // Convert postfix expression to parenthesized infix
+    private String postfixToParenthesizedInfix(List<String> postfix) {
+        Stack<String> stack = new Stack<>();
+        
+        for (String token : postfix) {
+            if (isOperator(token)) {
+                if (stack.size() < 2) {
+                    throw new IllegalArgumentException("Invalid expression");
+                }
+                String right = stack.pop();
+                String left = stack.pop();
+                stack.push("(" + left + " " + token + " " + right + ")");
             } else {
-                stack.push(token); // Push number
+                stack.push(token);
             }
         }
         
-        return stack.isEmpty() ? "" : stack.pop(); // Return final expression
+        return stack.isEmpty() ? "" : stack.pop();
     }
 
-    private String prefixToParenthesizedInfix(List<String> tokens) { // Convert prefix to parenthesized infix
-        Stack<String> stack = new Stack<>(); // Stack for processing
+    // Convert prefix expression to parenthesized infix
+    private String prefixToParenthesizedInfix(List<String> tokens) {
+        Stack<String> stack = new Stack<>();
         
-        // Iterate over tokens in reverse order for prefix processing
         for (int i = tokens.size() - 1; i >= 0; i--) {
             String token = tokens.get(i);
             
-            if (isOperator(token)) { // Check if token is operator
-                if (stack.size() < 2) { // Check stack size
-                    throw new IllegalArgumentException("Invalid expression"); // Throw exception
+            if (isOperator(token)) {
+                if (stack.size() < 2) {
+                    throw new IllegalArgumentException("Invalid expression");
                 }
-                String left = stack.pop(); // Pop left operand
-                String right = stack.pop(); // Pop right operand
-                stack.push("(" + left + " " + token + " " + right + ")"); // Push combined expression
+                String left = stack.pop();
+                String right = stack.pop();
+                stack.push("(" + left + " " + token + " " + right + ")");
             } else {
-                stack.push(token); // Push number
+                stack.push(token);
             }
         }
         
-        return stack.isEmpty() ? "" : stack.pop(); // Return final expression
+        return stack.isEmpty() ? "" : stack.pop();
     }
 
+    // Tokenize the expression into a list of strings
     private List<String> tokenizeExpression(String expression) {
         List<String> tokens = new ArrayList<>();
         Matcher matcher = Pattern.compile("-?\\d*\\.?\\d+|[-+*/()^]").matcher(expression);
@@ -197,6 +207,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return tokens;
     }
 
+    // Convert infix expression to postfix
     private static List<String> infixToPostfix(List<String> tokens) {
         Stack<String> stack = new Stack<>();
         List<String> output = new ArrayList<>();
@@ -227,20 +238,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return output;
     }
 
+    // Check if a token is a number
     private static boolean isNumber(String token) {
         return token.matches("-?\\d+(\\.\\d+)?");
     }
 
+    // Check if a token is an operator
     private static boolean isOperator(String token) {
         return "+-*/^".contains(token);
     }
 
+    // Determine if one operator has higher precedence than another
     private static boolean hasHigherPrecedence(String op1, String op2) {
         int p1 = getPrecedence(op1);
         int p2 = getPrecedence(op2);
         return p1 > p2 || (p1 == p2 && isLeftAssociative(op1));
     }
 
+    // Get the precedence of an operator
     private static int getPrecedence(String op) {
         switch (op) {
             case "+":
@@ -252,68 +267,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    // Check if an operator is left associative
     private static boolean isLeftAssociative(String op) {
         return !"^".equals(op);
     }
 
-    private NotationType detectNotationType(String expression) { // Detect notation type
-        List<String> tokens = tokenizeExpression(expression); // Tokenize expression
-        if (tokens.isEmpty()) return NotationType.INFIX; // Return infix if no tokens
+    // Detect the notation type of an expression
+    private NotationType detectNotationType(String expression) {
+        List<String> tokens = tokenizeExpression(expression);
+        if (tokens.isEmpty()) return NotationType.INFIX;
         
-        // Check first and last tokens
-        String firstToken = tokens.get(0); // Get first token
-        String lastToken = tokens.get(tokens.size() - 1); // Get last token
+        String firstToken = tokens.get(0);
+        String lastToken = tokens.get(tokens.size() - 1);
         
-        // If first token is an operator (except minus for negative numbers)
-        if (isOperator(firstToken) && !firstToken.equals("-")) { // Check if first token is operator and not minus
-            return NotationType.PREFIX; // Return prefix
+        if (isOperator(firstToken) && !firstToken.equals("-")) {
+            return NotationType.PREFIX;
+        } else if (isOperator(lastToken)) {
+            return NotationType.POSTFIX;
         }
-        // If last token is an operator
-        else if (isOperator(lastToken)) { // Check if last token is operator
-            return NotationType.POSTFIX; // Return postfix
-        }
-        // Default to infix
-        return NotationType.INFIX; // Return infix
+        return NotationType.INFIX;
     }
 
-    private void displayResult(NotationType notation, String expression, double result) { // Display result
-        String formatted = String.format("Type: %s\n %s = %.2f", // Format result string
-                notation.toString(), expression, result); // Include notation type, expression, and result
-        resultTextView.setTextColor(Color.parseColor("#212121")); // Set text color
-        resultTextView.setText(formatted); // Set text in result view
+    // Display the result of the calculation
+    private void displayResult(NotationType notation, String expression, double result) {
+        @SuppressLint("DefaultLocale") String formatted = String.format("Type: %s\n %s = %.2f", notation.toString(), expression, result);
+        resultTextView.setTextColor(Color.parseColor("#212121"));
+        resultTextView.setText(formatted);
     }
 
-    private void showError(String message) { // Show error message
-        resultTextView.setTextColor(Color.RED); // Set text color to red
-        resultTextView.setText(message); // Set error message in result view
+    // Show an error message
+    private void showError(String message) {
+        resultTextView.setTextColor(Color.RED);
+        resultTextView.setText(message);
     }
 
-    // Inner enum for notation types
-    enum NotationType { // Enum for notation types
-        INFIX, PREFIX, POSTFIX // Define notation types
+    // Enum for notation types
+    enum NotationType {
+        INFIX, PREFIX, POSTFIX
     }
 
-    // Mock evaluator class (should be implemented separately)
-    static class ExpressionEvaluator { // Static class for expression evaluation
-        static double evaluate(String expr, NotationType type) { // Evaluate expression
+    // Static class for expression evaluation
+    static class ExpressionEvaluator {
+        // Evaluate an expression based on its notation type
+        static double evaluate(String expr, NotationType type) {
             try {
-                List<String> tokens = tokenizeExpression(expr); // Tokenize expression
-                switch (type) { // Switch based on notation type
+                List<String> tokens = tokenizeExpression(expr);
+                switch (type) {
                     case INFIX:
-                        return evaluatePostfix(infixToPostfix(tokens)); // Evaluate infix
+                        return evaluatePostfix(infixToPostfix(tokens));
                     case POSTFIX:
-                        return evaluatePostfix(tokens); // Evaluate postfix
+                        return evaluatePostfix(tokens);
                     case PREFIX:
-                        Collections.reverse(tokens); // Reverse tokens for prefix
-                        return evaluatePostfix(prefixToPostfix(tokens)); // Evaluate prefix
+                        Collections.reverse(tokens);
+                        return evaluatePostfix(prefixToPostfix(tokens));
                     default:
-                        return 0.0; // Default return value
+                        return 0.0;
                 }
-            } catch (Exception e) { // Catch exceptions
-                throw new IllegalArgumentException(""); // Throw exception
+            } catch (Exception e) {
+                throw new IllegalArgumentException("");
             }
         }
 
+        // Tokenize the expression into a list of strings
         private static List<String> tokenizeExpression(String expression) {
             List<String> tokens = new ArrayList<>();
             Matcher matcher = Pattern.compile("-?\\d*\\.?\\d+|[-+*/()^]").matcher(expression);
@@ -324,6 +339,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return tokens;
         }
 
+        // Convert prefix expression to postfix
         private static List<String> prefixToPostfix(List<String> prefix) {
             Stack<List<String>> stack = new Stack<>();
             
@@ -332,8 +348,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (stack.size() < 2) {
                         throw new IllegalArgumentException("Invalid prefix: not enough operands for " + token);
                     }
-                    List<String> op1 = stack.pop(); // Right operand
-                    List<String> op2 = stack.pop(); // Left operand
+                    List<String> op1 = stack.pop();
+                    List<String> op2 = stack.pop();
                     List<String> temp = new ArrayList<>();
                     temp.addAll(op2);
                     temp.addAll(op1);
@@ -352,49 +368,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return stack.pop();
         }
 
-        private static double evaluatePostfix(List<String> postfix) { // Evaluate postfix expression
-            Stack<Double> stack = new Stack<>(); // Stack for evaluation
+        // Evaluate a postfix expression
+        private static double evaluatePostfix(List<String> postfix) {
+            Stack<Double> stack = new Stack<>();
             
-            for (String token : postfix) { // Iterate over tokens
-                if (isNumber(token)) { // Check if token is number
-                    stack.push(Double.parseDouble(token)); // Push number to stack
-                } else if (isOperator(token)) { // Check if token is operator
-                    double b = stack.pop(); // Pop second operand
-                    double a = stack.pop(); // Pop first operand
-                    stack.push(applyOperator(token, a, b)); // Apply operator and push result
+            for (String token : postfix) {
+                if (isNumber(token)) {
+                    stack.push(Double.parseDouble(token));
+                } else if (isOperator(token)) {
+                    double b = stack.pop();
+                    double a = stack.pop();
+                    stack.push(applyOperator(token, a, b));
                 }
             }
             
-            return stack.pop(); // Return final result
+            return stack.pop();
         }
 
-        private static double applyOperator(String operator, double a, double b) { // Apply operator
-            switch (operator) { // Switch based on operator
-                case "+": return a + b; // Addition
-                case "-": return a - b; // Subtraction
-                case "*": return a * b; // Multiplication
+        // Apply an operator to two operands
+        private static double applyOperator(String operator, double a, double b) {
+            switch (operator) {
+                case "+": return a + b;
+                case "-": return a - b;
+                case "*": return a * b;
                 case "/": 
-                    if (b == 0) throw new ArithmeticException("Division by zero"); // Check for division by zero
-                    return a / b; // Division
-                case "^": return Math.pow(a, b); // Exponentiation
-                default: throw new IllegalArgumentException("Unknown operator: " + operator); // Throw exception for unknown operator
+                    if (b == 0) throw new ArithmeticException("Division by zero");
+                    return a / b;
+                case "^": return Math.pow(a, b);
+                default: throw new IllegalArgumentException("Unknown operator: " + operator);
             }
         }
 
+        // Check if a token is a number
         private static boolean isNumber(String token) {
             return token.matches("-?\\d+(\\.\\d+)?");
         }
 
+        // Check if a token is an operator
         private static boolean isOperator(String token) {
             return "+-*/^".contains(token);
         }
 
+        // Determine if one operator has higher precedence than another
         private static boolean hasHigherPrecedence(String op1, String op2) {
             int p1 = getPrecedence(op1);
             int p2 = getPrecedence(op2);
             return p1 > p2 || (p1 == p2 && isLeftAssociative(op1));
         }
 
+        // Get the precedence of an operator
         private static int getPrecedence(String op) {
             switch (op) {
                 case "+":
